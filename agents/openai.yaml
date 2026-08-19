@@ -1,4 +1,4 @@
 interface:
   display_name: "AI-Native Maturity Audit"
   short_description: "Assess repository and team AI-native maturity"
-  default_prompt: "Use $ai-native-maturity-audit to assess whether this repository and its team are AI-native."
+  default_prompt: "Use $ai-native-maturity-audit to run a full interactive assessment; inspect the repository, then ask me one evidence-seeking question per turn until the interview is ready to score."

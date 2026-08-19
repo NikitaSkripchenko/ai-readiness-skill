@@ -52,6 +52,8 @@ Interpretation:
 
 ## Team maturity: S0–S4
 
+Team maturity requires a completed interview. Repository evidence may corroborate team practices but cannot establish a team stage by itself.
+
 - `S0 Improvised` — AI use is absent or accidental; outcomes depend on individuals.
 - `S1 Assisted` — people use AI for suggestions under close supervision, without a shared operating system.
 - `S2 Delegated` — bounded work is delegated through repeatable context, review, and verification practices.
@@ -75,4 +77,3 @@ Use [rubric.json](rubric.json) as the canonical set of stage controls. A dimensi
 ## Source note
 
 This model combines and substantially restructures two user-provided inputs: the `ai-coding-readiness-audit` repository checklist and the public [Agentic Engineering Maturity — Factory Edition](https://claude.ai/public/artifacts/20941cc9-6721-45df-9f86-7fdd6a40cf44), version 2026.06.0. The controls and wording here are purpose-built for an interactive evidence-based audit.
-

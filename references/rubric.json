@@ -1,7 +1,7 @@
 {
   "skill": "ai-native-maturity-audit",
-  "skill_version": "1.0.1",
-  "assessment_revision": "2026-08-19",
+  "skill_version": "3.0.0",
+  "assessment_revision": "2026-08-19.3",
   "stages": {
     "0": "Improvised",
     "1": "Assisted",

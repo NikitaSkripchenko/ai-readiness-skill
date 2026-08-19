@@ -1,17 +1,30 @@
 ---
 skill: ai-native-maturity-audit
-skill_version: 1.0.1
-assessment_revision: 2026-08-19
+skill_version: 3.0.0
+assessment_revision: 2026-08-19.3
 assessed_at: YYYY-MM-DD
+assessment_mode: full | repository-only
 scope: "repository, team, and timeframe"
-confidence: low | medium | high
+confidence: low | medium | high | not assessable
+interview_question_turns: 0 | integer
 ---
 
 # AI-Native Maturity Assessment
 
+## Assessment validity
+
+- Mode: full or repository-only
+- User-answered question turns: X
+- Resolved dimensions: X / 9
+- Critical dimensions discussed: review, tests, safety
+
+If mode is `full` and fewer than four question turns were answered, any dimension record is missing, or a critical dimension remains unknown, stop: the assessment is invalid and this report must not be issued.
+
 ## Verdict
 
-**<Not AI-native | Emerging | AI-native | Advanced>** — one direct paragraph explaining why, the scope of the conclusion, and the single most important limiting factor.
+For a full assessment: **<Not AI-native | Emerging | AI-native | Advanced>** — one direct paragraph explaining why, the scope of the conclusion, and the single most important limiting factor.
+
+For repository-only mode: **Team AI-native verdict: not assessable** — explain that the team interview was not completed. Do not infer a team verdict from repository readiness.
 
 ## Results
 
@@ -20,6 +33,7 @@ confidence: low | medium | high
 | Repository readiness | X / 10 | not ready / partially ready / mostly ready / AI-coding ready |
 | Team maturity | S0–S4 | lowest load-bearing dimension |
 | Confidence | low / medium / high | strength and completeness of evidence |
+| Interview | X answered questions | all 9 dimensions resolved/explicitly unknown or repository-only |
 
 ## Repository scorecard
 

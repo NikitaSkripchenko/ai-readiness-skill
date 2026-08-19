@@ -1,5 +1,21 @@
 # Scoring and verdicts
 
+## Interaction prerequisite
+
+A full team assessment is invalid until the interview gate passes. The scorer requires:
+
+- `mode: full`;
+- at least four user-answered question turns;
+- `confirmed_by_user: true`;
+- terminal state `ready_to_score`;
+- all nine dimensions represented by structured interview records;
+- specific user evidence for every resolved dimension;
+- all critical dimensions resolved rather than unknown.
+
+Without that evidence, use `mode: repository-only`. Repository-only mode produces a readiness score but no team maturity stage and no AI-native verdict.
+
+If a non-critical dimension remains explicitly unknown after a valid interview, the assessment is complete but the team verdict is `Not assessable`. Unknown evidence is not negative evidence.
+
 ## Control statuses
 
 - `met`: consistent recent practice with relevant evidence;
@@ -19,7 +35,7 @@ Examples:
 - S1–S3 met, S4 unverified → dimension S3.
 - S2–S4 met but S1 unverified → dimension S0 until the contradiction is resolved.
 
-The overall team stage is the minimum of the nine dimension stages.
+The overall team stage is the minimum of the nine dimension stages. Calculate it only after the interaction prerequisite passes.
 
 ## Repository readiness
 

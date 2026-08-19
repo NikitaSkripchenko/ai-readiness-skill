@@ -1,6 +1,6 @@
 # AI-Native Maturity Audit
 
-Version `1.0.1` · assessment revision `2026-08-19`
+Version `3.0.0` · assessment revision `2026-08-19.3`
 
 This Codex skill determines whether a repository and the team operating it are AI-native. It combines read-only repository inspection, an adaptive team interview, evidence classification, deterministic scoring, and a prioritized maturity report.
 
@@ -50,7 +50,7 @@ Use $ai-native-maturity-audit to assess whether this repository and the team
 operating it are AI-native.
 ```
 
-The skill audits read-only by default. It inspects repository evidence first, then asks only the organizational questions that cannot be answered from the repository.
+The skill audits read-only by default. A full assessment is deliberately multi-turn: it inspects repository evidence, asks one adaptive question per turn, challenges vague answers, smart-skips questions already supported by concrete evidence, and refuses to issue a team verdict until the interview reaches `ready_to_score`. A repository-only run reports readiness but marks team maturity as not assessable.
 
 ## Verify the package
 

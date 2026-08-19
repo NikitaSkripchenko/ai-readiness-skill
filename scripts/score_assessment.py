@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Deterministically score an AI-native maturity assessment.
 
-The input is JSON. Repository criteria are integers from 0 to 2. Dimension
-controls contain a status and zero or more evidence labels. Missing controls
-are treated as unverified.
+The input is JSON. Full assessments require a completed multi-turn team
+interview. Repository-only assessments never produce a team maturity verdict.
 """
 
 from __future__ import annotations
@@ -36,6 +35,11 @@ EVIDENCE_LABELS = {
 }
 STRONG_EVIDENCE = {"observed", "corroborated"}
 SUPPORTING_EVIDENCE = {"declared", "inferred"}
+ASSESSMENT_MODES = {"full", "repository-only"}
+INTERVIEW_DIMENSION_STATES = {"resolved", "explicit_unknown"}
+RESOLVED_ANSWER_QUALITIES = {"specific", "corroborated", "explicit_absence"}
+INTERVIEW_EVIDENCE_SOURCES = {"declared", "corroborated"}
+EVIDENCE_RECENCY = {"recent", "stale", "unknown"}
 
 
 class AssessmentError(ValueError):
@@ -125,6 +129,156 @@ def repository_result(assessment: dict[str, Any]) -> dict[str, Any]:
     else:
         label = "AI-coding ready"
     return {"score": total, "label": label, "criteria": scores}
+
+
+def interview_result(
+    rubric: dict[str, Any], assessment: dict[str, Any]
+) -> dict[str, Any]:
+    raw = assessment.get("interview")
+    if not isinstance(raw, dict):
+        raise AssessmentError(
+            "Full assessment requires an interview object; use repository-only "
+            "mode when the team interview was not completed"
+        )
+
+    question_turns = raw.get("question_turns")
+    if (
+        isinstance(question_turns, bool)
+        or not isinstance(question_turns, int)
+        or question_turns < 4
+    ):
+        raise AssessmentError(
+            "Full assessment requires at least 4 user-answered question turns"
+        )
+    if raw.get("confirmed_by_user") is not True:
+        raise AssessmentError(
+            "Full assessment requires confirmed_by_user: true; repository evidence "
+            "cannot complete the interview"
+        )
+
+    if raw.get("terminal_state") != "ready_to_score":
+        raise AssessmentError(
+            "Full assessment requires interview.terminal_state: ready_to_score"
+        )
+
+    records = raw.get("dimensions")
+    if not isinstance(records, dict):
+        raise AssessmentError("interview.dimensions must be an object")
+
+    expected = {dimension["id"] for dimension in rubric["dimensions"]}
+    unknown = set(records) - expected
+    missing = expected - set(records)
+    if unknown:
+        raise AssessmentError(f"Interview has unknown dimensions: {sorted(unknown)}")
+    if missing:
+        raise AssessmentError(
+            f"Interview is incomplete; dimension records missing: {sorted(missing)}"
+        )
+
+    critical = {
+        dimension["id"]
+        for dimension in rubric["dimensions"]
+        if dimension.get("critical")
+    }
+    explicit_unknown: list[str] = []
+    normalized: dict[str, dict[str, Any]] = {}
+    for dimension_id in sorted(expected):
+        record = records[dimension_id]
+        if not isinstance(record, dict):
+            raise AssessmentError(
+                f"Interview dimension {dimension_id!r} must be an object"
+            )
+        state = record.get("state")
+        if state not in INTERVIEW_DIMENSION_STATES:
+            raise AssessmentError(
+                f"Interview dimension {dimension_id!r} must be resolved or explicit_unknown"
+            )
+        quality = record.get("answer_quality")
+        evidence = record.get("user_evidence", [])
+        if not isinstance(evidence, list):
+            raise AssessmentError(
+                f"Interview dimension {dimension_id!r} user_evidence must be a list"
+            )
+        challenge_count = record.get("challenge_count", 0)
+        if (
+            isinstance(challenge_count, bool)
+            or not isinstance(challenge_count, int)
+            or challenge_count < 0
+        ):
+            raise AssessmentError(
+                f"Interview dimension {dimension_id!r} challenge_count must be non-negative"
+            )
+
+        normalized_evidence: list[dict[str, str]] = []
+        for index, item in enumerate(evidence):
+            if not isinstance(item, dict):
+                raise AssessmentError(
+                    f"Interview dimension {dimension_id!r} evidence #{index + 1} must be an object"
+                )
+            summary = item.get("summary")
+            source = item.get("source")
+            recency = item.get("recency")
+            if not isinstance(summary, str) or not summary.strip():
+                raise AssessmentError(
+                    f"Interview dimension {dimension_id!r} evidence #{index + 1} needs a summary"
+                )
+            if source not in INTERVIEW_EVIDENCE_SOURCES:
+                raise AssessmentError(
+                    f"Interview dimension {dimension_id!r} evidence source must be declared or corroborated"
+                )
+            if recency not in EVIDENCE_RECENCY:
+                raise AssessmentError(
+                    f"Interview dimension {dimension_id!r} evidence recency must be recent, stale, or unknown"
+                )
+            normalized_evidence.append(
+                {"summary": summary.strip(), "source": source, "recency": recency}
+            )
+
+        if state == "resolved":
+            if quality not in RESOLVED_ANSWER_QUALITIES:
+                raise AssessmentError(
+                    f"Resolved interview dimension {dimension_id!r} needs specific, "
+                    "corroborated, or explicit_absence answer quality"
+                )
+            if not normalized_evidence:
+                raise AssessmentError(
+                    f"Resolved interview dimension {dimension_id!r} needs user evidence"
+                )
+            if quality == "corroborated" and not any(
+                item["source"] == "corroborated" for item in normalized_evidence
+            ):
+                raise AssessmentError(
+                    f"Corroborated interview dimension {dimension_id!r} needs corroborated evidence"
+                )
+        else:
+            if quality != "unknown" or normalized_evidence:
+                raise AssessmentError(
+                    f"explicit_unknown dimension {dimension_id!r} must use unknown quality "
+                    "and no evidence"
+                )
+            explicit_unknown.append(dimension_id)
+
+        normalized[dimension_id] = {
+            "state": state,
+            "answer_quality": quality,
+            "user_evidence": normalized_evidence,
+            "challenge_count": challenge_count,
+        }
+
+    critical_unknown = critical & set(explicit_unknown)
+    if critical_unknown:
+        raise AssessmentError(
+            f"Critical interview dimensions cannot remain unknown: {sorted(critical_unknown)}"
+        )
+
+    return {
+        "question_turns": question_turns,
+        "confirmed_by_user": True,
+        "terminal_state": "ready_to_score",
+        "dimensions": normalized,
+        "explicit_unknown_dimensions": explicit_unknown,
+        "critical_dimensions_resolved": sorted(critical),
+    }
 
 
 def dimension_results(
@@ -247,17 +401,49 @@ def verdict_result(
 
 
 def score(assessment: dict[str, Any], rubric: dict[str, Any]) -> dict[str, Any]:
+    mode = assessment.get("mode")
+    if mode not in ASSESSMENT_MODES:
+        raise AssessmentError(
+            f"mode must be one of {sorted(ASSESSMENT_MODES)}; got {mode!r}"
+        )
     repository = repository_result(assessment)
-    dimensions, assessed_controls = dimension_results(rubric, assessment)
-    confidence = confidence_result(assessed_controls)
-    verdict = verdict_result(repository, dimensions, confidence)
-    return {
+    base = {
         "skill": rubric["skill"],
         "skill_version": rubric["skill_version"],
         "assessment_revision": rubric["assessment_revision"],
-        **verdict,
-        "stage_label": rubric["stages"][str(verdict["overall_stage"])],
+        "mode": mode,
         "repository": repository,
+    }
+    if mode == "repository-only":
+        return {
+            **base,
+            "verdict": "Not assessable",
+            "overall_stage": None,
+            "stage_label": None,
+            "confidence": None,
+            "critical_blockers": [],
+            "dimensions": [],
+            "interview": None,
+        }
+
+    interview = interview_result(rubric, assessment)
+    dimensions, assessed_controls = dimension_results(rubric, assessment)
+    confidence = confidence_result(assessed_controls)
+    if interview["explicit_unknown_dimensions"]:
+        verdict = {
+            "verdict": "Not assessable",
+            "overall_stage": None,
+            "critical_blockers": [],
+        }
+        stage_label = None
+    else:
+        verdict = verdict_result(repository, dimensions, confidence)
+        stage_label = rubric["stages"][str(verdict["overall_stage"])]
+    return {
+        **base,
+        **verdict,
+        "stage_label": stage_label,
+        "interview": interview,
         "confidence": confidence,
         "dimensions": [
             {
@@ -274,23 +460,58 @@ def score(assessment: dict[str, Any], rubric: dict[str, Any]) -> dict[str, Any]:
 
 
 def as_markdown(result: dict[str, Any]) -> str:
+    confidence = result["confidence"]["label"] if result["confidence"] else "not assessable"
     lines = [
         "---",
         f"skill: {result['skill']}",
         f"skill_version: {result['skill_version']}",
         f"assessment_revision: {result['assessment_revision']}",
-        f"confidence: {result['confidence']['label']}",
+        f"assessment_mode: {result['mode']}",
+        f"confidence: {confidence}",
         "---",
         "",
         "# AI-Native Maturity Score",
         "",
-        f"**{result['verdict']}** — S{result['overall_stage']} "
-        f"{result['stage_label']}; repository {result['repository']['score']}/10 "
-        f"({result['repository']['label']}); confidence {result['confidence']['label']}.",
-        "",
-        "| Dimension | Stage | Next unmet control |",
-        "|---|---:|---|",
     ]
+    if result["mode"] == "repository-only":
+        lines.extend(
+            [
+                "**Team AI-native verdict: not assessable.** The team interview was not completed.",
+                "",
+                f"Repository readiness: {result['repository']['score']}/10 "
+                f"({result['repository']['label']}).",
+            ]
+        )
+        return "\n".join(lines) + "\n"
+
+    if result["verdict"] == "Not assessable":
+        lines.extend(
+            [
+                "**Team AI-native verdict: not assessable.** One or more non-critical "
+                "dimensions remain explicitly unknown.",
+                "",
+                f"Repository readiness: {result['repository']['score']}/10 "
+                f"({result['repository']['label']}).",
+                "",
+                "Unknown dimensions: "
+                + ", ".join(result["interview"]["explicit_unknown_dimensions"]),
+            ]
+        )
+        return "\n".join(lines) + "\n"
+
+    lines.extend(
+        [
+            f"**{result['verdict']}** — S{result['overall_stage']} "
+            f"{result['stage_label']}; repository {result['repository']['score']}/10 "
+            f"({result['repository']['label']}); confidence {confidence}.",
+            "",
+            f"Interview: {result['interview']['question_turns']} user-answered questions; "
+            "9/9 dimensions resolved.",
+            "",
+            "| Dimension | Stage | Next unmet control |",
+            "|---|---:|---|",
+        ]
+    )
     for dimension in result["dimensions"]:
         next_control = dimension["next_control"]
         next_id = next_control["id"] if next_control else "none"
