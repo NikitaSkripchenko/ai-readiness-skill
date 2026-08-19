@@ -1,0 +1,113 @@
+{
+  "skill": "ai-native-maturity-audit",
+  "skill_version": "1.0.1",
+  "assessment_revision": "2026-08-19",
+  "stages": {
+    "0": "Improvised",
+    "1": "Assisted",
+    "2": "Delegated",
+    "3": "Orchestrated",
+    "4": "Autonomous"
+  },
+  "dimensions": [
+    {
+      "id": "intent-specification",
+      "name": "Intent and specification",
+      "critical": false,
+      "controls": [
+        {"id": "intent-s1", "stage": 1, "statement": "AI-assisted work begins with intent that a human can explain and review."},
+        {"id": "intent-s2", "stage": 2, "statement": "Non-trivial changes consistently start from durable goals, constraints, non-goals, edge cases, and acceptance criteria."},
+        {"id": "intent-s3", "stage": 3, "statement": "Decision rationale and definitions of done are shared standards and incomplete intent is rejected before implementation."},
+        {"id": "intent-s4", "stage": 4, "statement": "The organization detects and repairs intent debt across agent workflows using maintained evidence and ownership."}
+      ]
+    },
+    {
+      "id": "context-harness",
+      "name": "Context, memory, and harness",
+      "critical": false,
+      "controls": [
+        {"id": "context-s1", "stage": 1, "statement": "Developers deliberately provide project context when using coding agents."},
+        {"id": "context-s2", "stage": 2, "statement": "A cold-start agent can discover project boundaries, architecture, commands, and verification paths from maintained artifacts."},
+        {"id": "context-s3", "stage": 3, "statement": "Shared rules, skills, hooks, context bundles, and task memory have owners and are improved through review."},
+        {"id": "context-s4", "stage": 4, "statement": "The harness and knowledge system demonstrably improve outcomes across repositories or teams."}
+      ]
+    },
+    {
+      "id": "autonomy-orchestration",
+      "name": "Autonomy and orchestration",
+      "critical": false,
+      "controls": [
+        {"id": "autonomy-s1", "stage": 1, "statement": "Humans supervise AI suggestions and remain responsible for executed changes."},
+        {"id": "autonomy-s2", "stage": 2, "statement": "Bounded delegated workflows have explicit permissions, stop conditions, and human handback points."},
+        {"id": "autonomy-s3", "stage": 3, "statement": "Isolation, maker-checker separation, parallel execution, and review capacity are deliberately engineered."},
+        {"id": "autonomy-s4", "stage": 4, "statement": "Guarded autonomous loops routinely complete meaningful work within enforced blast-radius and duration limits."}
+      ]
+    },
+    {
+      "id": "verification-review",
+      "name": "Verification and review",
+      "critical": true,
+      "controls": [
+        {"id": "review-s1", "stage": 1, "statement": "A human reads and owns AI-assisted changes before they affect users."},
+        {"id": "review-s2", "stage": 2, "statement": "Review depth follows risk and explicitly checks common AI-generated failure modes."},
+        {"id": "review-s3", "stage": 3, "statement": "Evidence-gated intake and independent checking are standard for non-trivial or high-risk work."},
+        {"id": "review-s4", "stage": 4, "statement": "Automated triage reliably routes low-risk work and escalates anomalous or expensive changes for human judgment."}
+      ]
+    },
+    {
+      "id": "tests-gates",
+      "name": "Tests and deterministic gates",
+      "critical": true,
+      "controls": [
+        {"id": "tests-s1", "stage": 1, "statement": "AI-assisted changes are followed by relevant executable checks."},
+        {"id": "tests-s2", "stage": 2, "statement": "Required CI gates cover the relevant quality bar and cannot be silently bypassed."},
+        {"id": "tests-s3", "stage": 3, "statement": "The workflow detects weakened tests, removed thresholds, skipped checks, and behavior changed merely to satisfy generated output."},
+        {"id": "tests-s4", "stage": 4, "statement": "Critical paths use high-signal techniques such as mutation, property, differential, or equivalent adversarial testing."}
+      ]
+    },
+    {
+      "id": "safety-governance",
+      "name": "Safety, security, and governance",
+      "critical": true,
+      "controls": [
+        {"id": "safety-s1", "stage": 1, "statement": "Agents have explicit boundaries for sensitive data, credentials, production, and destructive actions."},
+        {"id": "safety-s2", "stage": 2, "statement": "Secrets, permissions, provenance, and production access are technically controlled rather than left to prompts alone."},
+        {"id": "safety-s3", "stage": 3, "statement": "Third-party tools are vetted, destructive actions are blocked, untrusted inputs are isolated, and exceptions are auditable."},
+        {"id": "safety-s4", "stage": 4, "statement": "Organization-wide audits and incident evidence show that guardrails work and improve over time."}
+      ]
+    },
+    {
+      "id": "comprehension-judgment",
+      "name": "Comprehension and judgment",
+      "critical": false,
+      "controls": [
+        {"id": "comprehension-s1", "stage": 1, "statement": "Engineers are expected to understand and explain generated changes."},
+        {"id": "comprehension-s2", "stage": 2, "statement": "The team names and challenges unsafe surrender behaviors such as unread acceptance and specification-free implementation."},
+        {"id": "comprehension-s3", "stage": 3, "statement": "Load-bearing systems have explicit human ownership and role-specific AI literacy expectations."},
+        {"id": "comprehension-s4", "stage": 4, "statement": "The organization preserves time, authority, and incentives for engineering judgment as automated output grows."}
+      ]
+    },
+    {
+      "id": "reusable-learning",
+      "name": "Reusable capability and learning",
+      "critical": false,
+      "controls": [
+        {"id": "learning-s1", "stage": 1, "statement": "Useful prompts or workflows are intentionally reused."},
+        {"id": "learning-s2", "stage": 2, "statement": "Shared instructions, templates, rules, or skills are versioned and discoverable."},
+        {"id": "learning-s3", "stage": 3, "statement": "Repeated failures become reviewed tests, hooks, rules, or checker behavior with named ownership."},
+        {"id": "learning-s4", "stage": 4, "statement": "Evaluated capabilities are shared across repositories or teams and retired when they stop adding value."}
+      ]
+    },
+    {
+      "id": "measurement-compounding",
+      "name": "Measurement, cost, and compounding",
+      "critical": false,
+      "controls": [
+        {"id": "measurement-s1", "stage": 1, "statement": "The team can identify where and how AI contributes to engineering work."},
+        {"id": "measurement-s2", "stage": 2, "statement": "Adoption, cost, provenance, rework, and quality signals are visible enough to guide decisions."},
+        {"id": "measurement-s3", "stage": 3, "statement": "Named owners review trends and AI-related incidents, then change the operating system in response."},
+        {"id": "measurement-s4", "stage": 4, "statement": "Trend evidence shows fewer repeated failures and stable or improving quality as agent-driven volume increases."}
+      ]
+    }
+  ]
+}
